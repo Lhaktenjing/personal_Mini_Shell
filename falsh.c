@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_CHAR_INPUT 256
 //function declarations for built-in commands
+//function for "cd" command
 int falshCD(char ** args)
 {
     //no arguments passed
@@ -18,8 +20,8 @@ int falshCD(char ** args)
     }
   }
   return 1;
-
 }
+//funtion to print description to screen
 void falshHelp()
 {
      //print help
@@ -30,11 +32,21 @@ void falshHelp()
      printf("2. pwd- usage:pwd - prints current directory\n")
      printf("3. cd- usage:cd [dir] - chages specified directory\n");
      printf("4. setpath- usage setpath <dir> [dir]...[dir] - sets the path as specified\n");
+}
+void faslhPwd();
+{
+     char workingDirectory[1024];
+     getcwd(workingDirectory, sizeof(workingDirectory));
+     printf("\nDir: %s", workingDirectory);
+}
+int falshExit(char ** args);
+{
+     return 0;
+}
+int falshSetpath(char ** args);
+{
+
 
 }
-int faslhPwd(char ** args);
-int falshExit(char ** args);
-int falshSetpath(char ** args);
-
 
 
