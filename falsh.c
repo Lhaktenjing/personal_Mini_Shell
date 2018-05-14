@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -11,11 +12,10 @@
 //function for "cd" command
 //switches to directory specified by args
 void falshCD(char * arg)
-{
-    //no arguments passed
+{  //no arguments passed
     if (arg == NULL)
     fprintf(stderr, "falsh: expected command is: cd [dir]\n");
-    //go to dir stored args[1], if not sucessfull(doesn't return 0)
+    //go to dir stored args[1], if not sucessfull(doesn't return 0) fail gracefully
     else if (chdir(arg) != 0)
     fprintf(stderr, "falsh: no such file or directory\n");
 }
@@ -39,7 +39,7 @@ void falshPwd()
 {
      char workingDirectory[1024];//to store the returned path of current dir
      getcwd(workingDirectory, sizeof(workingDirectory));//get the directory and store in workingDirectory
-     printf("\nDir: %s", workingDirectory);//print it to the screen
+     printf("Dir: %s\n", workingDirectory);//print it to the screen
 }
 //--------------------------------------------------------
 //function for setpath
@@ -47,36 +47,12 @@ void falshPwd()
 void setPath(char * Arg [], int numArg)
 {
     char * current;
-    int i =0;
+    int i =1;//first Arg i.e. Arg[0] is "setpath"
     for(i; i< numArg; i++){
     current = getenv("PWD");
     if(setenv(current, Arg[i], 1)!= 0)
     fprintf(stderr,"cannot set path\n");
     }
-}
-//---------------------------------------------------------
-//function to return an array of args passed by user
-//reads user input and breaks it into arguments
-//and returns the args ordered in an array user input line
-char ** getArrayOfArgs()
-{
-     char Input[MAX_CHAR_INPUT];//to store user input
-     char * Args = malloc(sizeof(char)*50);//asumming 50 chars per Arg
-     char * line; //to read user input from arg
-     fgets(line, MAX_CHAR_INPUT, stdin);//get user input and store in line
-     const char delim[2] = " ";//for delimeter
-     int position = 0;//to k
-     char * arg = strtok(line, delim);
-     while(arg != NULL)
-     {
-     if(sizeof(arg)>50)//if more than 50 chars in an arg
-     Args = realloc(Args,50);//realloacate space
-     Args[position] = arg;//store current arg to arg array
-        position++;//increase counter
-        arg = strtok(NULL, delim);//next token
-     Args[position] = NULL; //end of args
-     return Args;//return array containing args
-     }
 }
 //------------------------------------------------
 //function to redirect command output to textfile
@@ -90,43 +66,59 @@ void redirection(char * Args[])
     }
     char * otherArgs;
     int argEnd = index;
-    FILE *file = fopen(Args[argEnd + 1], "w" );
-    //if (file ==NULL) fprinf(stderr,"file opening failed\n");//couldn't open file
-    //excvp(Args[0], Args);//execute command
+    FILE * file = fopen(Args[argEnd + 1], "w" );
+    if (file ==NULL)
+//  fprinf(stderr,"file opening failed\n");//couldn't open file
+//  dup2(file,1);//redirect stdout output to text file
+//  excvp(Args[0], Args);//execute command
     fclose(file);
  }
-
 //---------------------------------------------------------
 //function to take user input and process those inputs
+//first tokenizes the user input into a string array which ends at NULL
 //compares user inpput commands and calls appropraite function to run
 //
 void processArg()
 {
-     char line[MAX_CHAR_INPUT];//to store user input args
-     int numOfArgs = 0;//no args read yet
      while(1)//keeps on looping unless user chooses to exit
      {
+     char * commands[] = {"pwd","cd","help","setpath","exit"};//strtok adds \n at end
+     char * Args[MAX_CHAR_INPUT];
+     char line[1024]; //to read user input from arg
+     const char delim[1] = " ";//for delimeter
+     char * temp;
+     char * arg;
+     int numOfArgs;
      printf("falcon shell");
      printf("> ");
-     char ** Args;
-     Args = getArrayOfArgs();//get array of Args
-     while(Args[numOfArgs] != NULL)//to count number of args in arg array
-        numOfArgs++;//next index in arg array
-     if (numOfArgs > 0 && numOfArgs < 2)//for 1 or 2 args
+     fflush(stdin);
+     fgets(line, 1024, stdin);//get user input and store in line
+     numOfArgs = 0;//to count number of arguments
+     arg = strtok(line, delim);
+     while(arg != NULL)
      {
-     if(strcmp(Args[0],"exit")==0) return; //if user entered exit
-     else if (strcmp(Args[0],"cd")==0) //if first arg is "cd"
+        Args[numOfArgs] = arg;//store current arg to arg array
+        numOfArgs++;
+        arg = strtok(NULL, delim);//next token
+     }
+     int length = strlen(Args[numOfArgs-1]);
+     Args[numOfArgs-1][length-1] = NULL;//strtok adds a /n to the last token
+     Args[numOfArgs] = NULL; //end of args
+     if (numOfArgs > 0 && numOfArgs < 3)//for 1 or 2 args
+     {
+     if(strcmp(Args[0],commands[4])==0) { printf("exiting\n"); return;} //if user entered exit
+     else if(strcmp(Args[0],commands[1])==0) //if first arg is "cd"
      {
         if(numOfArgs == 2) falshCD(Args[1]); //if file was passed after "CD" go to file
         else if (numOfArgs == 1) chdir(getenv("HOME"));//else only "cd" is typed go to home dir
         else printf("Accepted command syntax is: cd [dir]\n");//else invalid command style
      }
-     else if (strcmp(Args[0],"pwd")==0) falshPwd();//if user entered pwd
-     else if (strcmp(Args[0],"help")==0) falshHelp();//if user entered help
+     else if (strcmp(Args[0],commands[0])==0) falshPwd();//if user entered pwd
+     if (strcmp(Args[0],commands[2])==0) falshHelp();//if user entered help
      }
      else if(numOfArgs>=4)//more than 4 args means file redirection
      {
-	if(strcmp(Args[0],"setpath")==0) setPath(Args,numOfArgs);
+     if(strcmp(Args[0],commands[3])==0) setPath(Args,numOfArgs);
         else redirection(Args);
      }
      }
