@@ -68,9 +68,9 @@ void redirection(char * Args[])
     int argEnd = index;
     FILE * file = fopen(Args[argEnd + 1], "w" );
     if (file ==NULL)
-//  fprinf(stderr,"file opening failed\n");//couldn't open file
-//  dup2(file,1);//redirect stdout output to text file
-//  excvp(Args[0], Args);//execute command
+    fprintf(stderr,"file opening failed\n");//couldn't open file
+    dup2(fileno(file),1);//redirect stdout output to text file
+    execvp(Args[0], Args);//execute command
     fclose(file);
  }
 //---------------------------------------------------------
@@ -106,7 +106,7 @@ void processArg()
      Args[numOfArgs] = NULL; //end of args
      if (numOfArgs > 0 && numOfArgs < 3)//for 1 or 2 args
      {
-     if(strcmp(Args[0],commands[4])==0) { printf("exiting\n"); return;} //if user entered exit
+     if(strcmp(Args[0],commands[4])==0) { printf("exiting\nThank you for using Falcon Shell\n"); return;} //if user entered exit
      else if(strcmp(Args[0],commands[1])==0) //if first arg is "cd"
      {
         if(numOfArgs == 2) falshCD(Args[1]); //if file was passed after "CD" go to file
@@ -114,12 +114,13 @@ void processArg()
         else printf("Accepted command syntax is: cd [dir]\n");//else invalid command style
      }
      else if (strcmp(Args[0],commands[0])==0) falshPwd();//if user entered pwd
-     if (strcmp(Args[0],commands[2])==0) falshHelp();//if user entered help
+     else if (strcmp(Args[0],commands[2])==0) falshHelp();//if user entered help
+     else printf("%s command not found. Type help for available commands.\n",Args[0]);
      }
      else if(numOfArgs>=4)//more than 4 args means file redirection
      {
      if(strcmp(Args[0],commands[3])==0) setPath(Args,numOfArgs);
-        else redirection(Args);
+     else redirection(Args);
      }
      }
 }
@@ -127,7 +128,7 @@ int main(int argc, char * argv[])
 {
     if (argc == 1)//only ./falsh called
         processArg();//loop
-    else if (argc == 2 && argv[1]=="-h")
+    else if (argc == 2 && strcmp(argv[1],"-h")==0)
     {
         falshHelp();//print help
         processArg();//go to loop
