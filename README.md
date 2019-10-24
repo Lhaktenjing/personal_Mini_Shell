@@ -1,7 +1,5 @@
-# osp_lab3_sherpal
+# Personal Mini Shell
 # Implemented by Lhakpa Sherpa
-# CSC 3350 Lab 3
-# Dr. Dingler
 
 This lab is a implementation of falsh shell. Falsh has the following "basic" functionality
 similar to bash abd other shells.'
